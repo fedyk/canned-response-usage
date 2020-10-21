@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <title>Canned Response Usage</title>
+  <link rel="stylesheet" href="assets/chart.css">
+  <link rel="stylesheet" href="assets/main.css">
+</head>
+
+<body>
+  <div class="header">Canned Responses Usage</div>
+
+  <div class="screen screen--loader">
+    <div id="loader" class="loader-container">
+      <div class="loader-wrapper mb-2">
+        <div class="loader-spinner-wrapper">
+          <div class="loader-spinner"></div>
+        </div>
+      </div>
+      <div id="loader-text" class="mb-2 text-muted">Loading...</div>
+    </div>
+  </div>
+
+  <div class="screen screen--login hidden d-flex align-items-center justify-content-center">
+    <button class="btn btn--primary" type="button" onclick="singIn()">
+      <div>Sign in with LiveChat</div>
+    </button>
+  </div>
+
+  <div class="screen screen--app hidden">
+    <div class="container">
+      <div id="chart-card">
+        <div id="chart-container"></div>
+      </div>
+
+      <div id="table-card"></div>
+    </div>
+  </div>
+
+  <script src="//cdn.livechatinc.com/accounts/accounts-sdk.js"></script>
+  <script src="./assets/chart.js"></script>
+  <script src="./assets/chart-controller.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+
+</html>
