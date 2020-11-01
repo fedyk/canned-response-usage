@@ -9,7 +9,7 @@ body {
     Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.2;
   color: #121212;
 }
@@ -37,12 +37,20 @@ body {
   margin-bottom: 14px;
 }
 
+.mb-0 {
+  margin-bottom: 0;
+}
+
 .d-flex {
   display: flex;
 }
 
 .flex-direction-column {
   flex-direction: column;
+}
+
+.flex-direction-row {
+  flex-direction: row;
 }
 
 .align-items-center {
@@ -260,4 +268,15 @@ body {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;  
   overflow: hidden;
+}
+
+.icon {
+  color: #4384f5;
+  font-size: 5em;
+  margin-bottom: 0;
+}
+
+.default-text {
+  font-size: 1.5em;
+  margin-bottom: 1em;
 }

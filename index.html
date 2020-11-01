@@ -16,7 +16,7 @@
   <div class="screen screen--loader">
     <div id="loader" class="loader-container">
       <div class="loader-wrapper mb-2">
-        <div class="loader-spinner-wrapper">
+        <div id="spinner" class="loader-spinner-wrapper">
           <div class="loader-spinner"></div>
         </div>
       </div>
@@ -25,9 +25,28 @@
   </div>
 
   <div class="screen screen--login hidden d-flex align-items-center justify-content-center">
-    <button class="btn btn--primary" type="button" onclick="singIn()">
+    <button class="btn btn--primary" type="button" onclick="handleSignIn()">
       <div>Sign in with LiveChat</div>
     </button>
+  </div>
+
+  <div class="screen screen--error hidden d-flex align-items-center justify-content-center flex-direction-column">
+    <div class="container text-center">
+      <h1 class="icon">⚠</h1>
+      <div id="error-text" class="default-text">Ops, unexpected error has happen. You can alway try your luck again
+      </div>
+      <button class="btn" type="button" onclick="handleRetry()">Retry</button>
+    </div>
+  </div>
+
+  <div
+    class="screen screen--no-usage-data hidden d-flex align-items-center justify-content-center flex-direction-column">
+    <div class="container text-center">
+      <div class="default-text">It is a pity, but you haven't used canned responses recently. They can save you a lot of
+        time. Check out more information in <a href="https://www.livechat.com/help/canned-responses/"
+          target="_blank">LiveChat HelpCenter</a>.</div>
+      <button class="btn" type="button" onclick="handleRetry()">Check again</button>
+    </div>
   </div>
 
   <div class="screen screen--app hidden">
@@ -35,7 +54,6 @@
       <div id="chart-card">
         <div id="chart-container"></div>
       </div>
-
       <div id="table-card"></div>
     </div>
   </div>
@@ -49,9 +67,12 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-9M5XCBZF9Z"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
 
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
     gtag('config', 'G-9M5XCBZF9Z');
   </script>
 </body>

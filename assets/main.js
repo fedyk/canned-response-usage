@@ -4,86 +4,101 @@ const hour = 60 * 60 * 1000
 const day = 60 * 60 * 24 * 1000;
 const PALLET = ["#66bb6a", "#7e57c2", "#ff7043", "#26c6da", "#9ccc65", "#5c6bc0", "#26a69a", "#d4e157", "#42a5f5", "#29b6f6", "#ffa726", "#ffca28", "#ef5350", "#ec407a", "#ab47bc"]
 const daysOffset = 30
+let $spinner;
+let $chartCard;
+let $chartContainer;
+let $tableContainer;
 let accountsSDK;
 let credentials;
-let loader;
-let loaderText;
+let $loader;
+let $loaderText;
 let auth;
 let api;
 let webApi;
 
-document.addEventListener("DOMContentLoaded", function () {
-  loader = document.getElementById("loader")
+document.addEventListener("DOMContentLoaded", function main() {
+  $loader = document.getElementById("loader")
+  $loaderText = document.getElementById("loader-text")
+  $spinner = document.getElementById("spinner")
+  $chartCard = document.getElementById("chart-card")
+  $chartContainer = document.getElementById("chart-container")
+  $tableContainer = document.getElementById("table-card")
 
-  if (!loader) {
+  if (!$loader) {
     throw new Error("`loader` can't be empty")
   }
 
-  loaderText = document.getElementById("loader-text")
-
-  if (!loaderText) {
-    throw new Error("`loaderText` can't be empty")
-  }
+  ok($loader, "`loader` can't be empty")
+  ok($loaderText, "`loader` can't be empty")
+  ok($spinner, "`spinner` can't be empty")
+  ok($chartCard, "Hm, can't find card with chart")
+  ok($chartContainer, "Hm, can't find chart container")
+  ok($tableContainer, "Hm, can't find element with id `table-card`")
 
   accountsSDK = AccountsSDK.init({
     client_id: "64da6a018ac5c8ad07a96cf8e0dd8b35",
     onIdentityFetched: handleIdentityFetched
   })
 
-  // handleIdentityFetched(null, {
-  //   access_token: "dal:XXX",
-  //   expires_in: 1000 * 60 * 60
-  // })
+  function handleIdentityFetched(error, response) {
+    if (error) {
+      return showLoginScreen()
+    }
 
-  // handleIdentityFetched(null, {
-  //   access_token: "dal:YYY",
-  //   expires_in: 1000 * 60 * 60
-  // })
+    credentials = parseTokenInfo(response)
+    auth = new Auth(credentials.access_token, credentials.expires_at)
+    api = new RestApi(auth)
+    webApi = new WebApi(auth)
+
+    displayUsageData(handleProgress).catch(handleError)
+  }
 })
 
-function singIn() {
+function handleSignIn() {
   if (accountsSDK) {
     accountsSDK.openPopup()
   }
 }
 
-function handleIdentityFetched(error, response) {
-  if (error) {
-    showLogin()
-  }
-  else {
-    credentials = parseTokenInfo(response)
-    auth = new Auth(credentials.access_token, credentials.expires_at)
-    api = new Api(auth)
-    webApi = new WebApi(auth)
-    prepareUsageData().catch(err => console.error(err))
-  }
+function handleRetry() {
+  showScreen("screen--loader")
+
+  displayUsageData(handleProgress).catch(handleError)
 }
 
-function showLogin() {
+function handleProgress(progressMessage) {
+  $loaderText.innerText = progressMessage
+}
+
+function handleError(err) {
+  $spinner.style.display = "none"
+  $loaderText.innerText = err
+}
+
+function showLoginScreen() {
   showScreen("screen--login")
 }
 
-async function prepareUsageData() {
-  const $chartCard = document.getElementById("chart-card")
-  const $chartContainer = document.getElementById("chart-container")
-  const $tableContainer = document.getElementById("table-card")
-
-  ok($chartCard, "Hm, can't find card with chart")
-  ok($chartContainer, "Hm, can't find chart container")
-  ok($tableContainer, "Hm, can't find element with id `table-card`")
+async function displayUsageData(onProgress) {
+  ok(typeof onProgress === "function", "`onProgress` should be a function")
 
   // init progress
-  loaderText.innerText = "Step 1 of 3: loading groups"
+  onProgress("Step 1 of 3: loading groups")
 
   const groups = await api.getGroups()
 
-  loaderText.innerText = "Step 2 of 3: loading canned responses"
+  onProgress("Step 2 of 3: loading canned responses")
 
   const cannedResponses = await api.getCannedResponses(groups.map(v => v.id))
   const to = endOfDay(new Date())
   const from = addDays(to, -daysOffset)
-  const usages = await getUsages(cannedResponses, from, to, handleUsageProgress)
+  const usages = await getUsages(cannedResponses, from, to, function (progress) {
+    onProgress(`Step 3 of 3: checking chats for last ${daysOffset} days (${progress}%)`)
+  })
+
+  if (usages.getSize() === 0) {
+    return showScreen("screen--no-usage-data")
+  }
 
   // get chart data
   const chartData = new ChartData(usages.toJSON(), from, to, cannedResponses)
@@ -96,11 +111,6 @@ async function prepareUsageData() {
 
   // show
   showScreen("screen--app")
-
-  // small util
-  function handleUsageProgress(progress) {
-    loaderText.innerText = `Step 3 of 3: checking chats for last ${daysOffset} days (${progress}%)`
-  }
 }
 
 function showScreen(screenName) {
@@ -142,7 +152,7 @@ class Auth {
   }
 }
 
-class Api {
+class RestApi {
   constructor(auth) {
     this.auth = auth;
   }
@@ -158,29 +168,23 @@ class Api {
   }
 
   perform(path, method, body) {
-    console.log("api#perform", path, method, body);
+    const region = this.auth.getRegion()
+    const accessToken = this.auth.getAccessToken()
+    const url = `https://us-central1-canned-response-usage.cloudfunctions.net/proxy/${path}`;
+    const headers = {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+      "X-API-Version": "2",
+      "X-Region": region
+    }
+    const init = {
+      headers,
+      method,
+      body: JSON.stringify(body)
+    }
 
-    return new Promise((resolve, reject) => {
-      const region = this.auth.getRegion()
-      const accessToken = this.auth.getAccessToken()
-      const url = `https://us-central1-canned-response-usage.cloudfunctions.net/proxy/${path}`;
-      const headers = {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-        "X-API-Version": "2",
-        "X-Region": region
-      }
-      const init = {
-        headers,
-        method,
-        body: JSON.stringify(body)
-      }
-
-      return fetch(url, init)
-        .then(parseJsonResponse)
-        .then(resolve)
-        .catch(reject)
-    })
+    return fetch(url, init)
+      .then(parseJsonResponse)
   }
 }
 
@@ -194,28 +198,21 @@ class WebApi {
   }
 
   perform(path, method, body) {
-    console.log("web-api#perform", path, method, body);
+    const region = this.auth.getRegion()
+    const accessToken = this.auth.getAccessToken()
+    const url = `https://api.livechatinc.com/${path}`;
+    const headers = {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+      "X-Region": region
+    }
+    const init = {
+      headers,
+      method,
+      body: JSON.stringify(body)
+    }
 
-    return new Promise((resolve, reject) => {
-      const region = this.auth.getRegion()
-      const accessToken = this.auth.getAccessToken()
-      const url = `https://api.livechatinc.com/${path}`;
-      const headers = {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-        "X-Region": region
-      }
-      const init = {
-        headers,
-        method,
-        body: JSON.stringify(body)
-      }
-
-      return fetch(url, init)
-        .then(parseJsonResponse)
-        .then(resolve)
-        .catch(reject)
-    })
+    return fetch(url, init).then(parseJsonResponse)
   }
 }
 
@@ -245,6 +242,10 @@ class Usages {
 
       return [cannedResponseId, usage]
     })
+  }
+
+  getSize() {
+    return this.usages.size
   }
 }
 
