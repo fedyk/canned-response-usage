@@ -61,8 +61,6 @@ function handleSignIn() {
 }
 
 function handleRetry() {
-  showScreen("screen--loader")
-
   displayUsageData(handleProgress).catch(handleError)
 }
 
@@ -80,6 +78,8 @@ function showLoginScreen() {
 }
 
 async function displayUsageData(onProgress) {
+  showScreen("screen--loader")
+
   ok(typeof onProgress === "function", "`onProgress` should be a function")
 
   // init progress
@@ -734,13 +734,15 @@ function renderTable(container, data, options) {
   table.className = "table"
   table.innerHTML = `
   <colgroup>
-    <col span="1" style="width: 80%;">
-    <col span="1" style="width: 20%;">
+    <!-- <col span="1" style="width: 4%;"> -->
+    <col span="1" style="width: 70%;">
+    <col span="1" style="width: 26%;">
     <!-- <col span="1" style="width: 15%;"> -->
   </colgroup>
 
   <thead>
     <tr>
+      <!-- <th scope="col"></th> -->
       <th scope="col">Canned Response</th>
       <th scope="col">Used</th>
       <!-- <th scope="col"></th> -->
@@ -766,6 +768,9 @@ function renderTable(container, data, options) {
     const tr = document.createElement("tr")
 
     tr.innerHTML = escapeHtml`
+      <!-- <td>
+        <input type="checkbox" />
+      </tb> -->
       <td>
         <p class="canned-response-text">${row.text}</p>
         <div class="tags"></div>
